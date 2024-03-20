@@ -44,7 +44,29 @@ const register = asyncHandler(async (req, res) => {
         },
     });
 });
-
+const login = asyncHandler(async (req, res) => {
+    const { email, password } = req.body;
+    // Kiểm tra email có tồn tại không
+    const existingUser = await UserModel.findOne({ email });
+    if (!existingUser) {
+        res.status(403);
+        throw new Error("User does not exist");
+    }
+    const isMatchPassword = bcrypt.compareSync(password, existingUser.password);
+    if (!isMatchPassword) {
+        res.status(401);
+        throw new Error("Email or passwords do not match");
+    }
+    res.status(200).json({
+        message: "Login successfully",
+        data: {
+            id: existingUser.id,
+            email: existingUser.email,
+            accessToken: getJsonWebToken(email, existingUser.id),
+        },
+    });
+});
 module.exports = {
     register,
+    login,
 };
