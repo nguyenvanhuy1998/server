@@ -2,6 +2,18 @@ const UserModel = require("../models/userModel");
 const bcrypt = require("bcrypt");
 const asyncHandler = require("express-async-handler");
 const jwt = require("jsonwebtoken");
+const nodemailer = require("nodemailer");
+require("dotenv").config();
+
+const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false, // Use `true` for port 465, `false` for all other ports
+    auth: {
+        user: process.env.USERNAME_EMAIL,
+        pass: process.env.EMAIL_PASSWORD,
+    },
+});
 
 const getJsonWebToken = (email, id) => {
     const payload = {
@@ -12,6 +24,21 @@ const getJsonWebToken = (email, id) => {
         expiresIn: "7d",
     });
     return token;
+};
+const handleSendMail = async (value, email) => {
+    //send mail
+    try {
+        await transporter.sendMail({
+            from: `Support Event Hub Application <${process.env.USERNAME_EMAIL}>`, // sender address
+            to: email, // list of receivers
+            subject: "Verification email code", // Subject line
+            text: "Your code to verification email", // plain text body
+            html: `<h1>${value}</h1>`, // html body
+        });
+        return "OK";
+    } catch (error) {
+        return error;
+    }
 };
 
 const register = asyncHandler(async (req, res) => {
@@ -44,6 +71,22 @@ const register = asyncHandler(async (req, res) => {
         },
     });
 });
+const verifyOtp = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+    const verificationCode = Math.round(1000 + Math.random() * 9000);
+    try {
+        await handleSendMail(verificationCode, email);
+        res.status(200).json({
+            message: "Send verification code successfully",
+            data: {
+                code: verificationCode,
+            },
+        });
+    } catch (error) {
+        res.status(401);
+        throw new Error("Cannot send email");
+    }
+});
 const login = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
     // Kiểm tra email có tồn tại không
@@ -69,4 +112,5 @@ const login = asyncHandler(async (req, res) => {
 module.exports = {
     register,
     login,
+    verifyOtp,
 };
