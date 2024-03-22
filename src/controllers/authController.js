@@ -25,16 +25,10 @@ const getJsonWebToken = (email, id) => {
     });
     return token;
 };
-const handleSendMail = async (value, email) => {
+const handleSendMail = async (value) => {
     //send mail
     try {
-        await transporter.sendMail({
-            from: `Support Event Hub Application <${process.env.USERNAME_EMAIL}>`, // sender address
-            to: email, // list of receivers
-            subject: "Verification email code", // Subject line
-            text: "Your code to verification email", // plain text body
-            html: `<h1>${value}</h1>`, // html body
-        });
+        await transporter.sendMail(value);
         return "OK";
     } catch (error) {
         return error;
@@ -75,7 +69,14 @@ const verifyOtp = asyncHandler(async (req, res) => {
     const { email } = req.body;
     const verificationCode = Math.round(1000 + Math.random() * 9000);
     try {
-        await handleSendMail(verificationCode, email);
+        const data = {
+            from: `Support Event Hub Application <${process.env.USERNAME_EMAIL}>`, // sender address
+            to: email, // list of receivers
+            subject: "Verification email code", // Subject line
+            text: "Your code to verification email", // plain text body
+            html: `<h1>${verificationCode}</h1>`, // html body
+        };
+        await handleSendMail(data);
         res.status(200).json({
             message: "Send verification code successfully",
             data: {
@@ -109,8 +110,55 @@ const login = asyncHandler(async (req, res) => {
         },
     });
 });
+const forgotPassword = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+    const randomPassword = Math.round(100000 + Math.random() * 99000);
+
+    const data = {
+        from: `New password <${process.env.USERNAME_EMAIL}>`, // sender address
+        to: email, // list of receivers
+        subject: "New password", // Subject line
+        text: "Your password", // plain text body
+        html: `<h1>${randomPassword}</h1>`, // html body
+    };
+    // Kiểm tra user có tồn tại không
+    const user = await UserModel.findOne({ email });
+    if (user) {
+        // Mã hóa password
+        const salt = await bcrypt.genSalt(10);
+        const hashPassword = bcrypt.hashSync(`${randomPassword}`, salt);
+        await UserModel.findByIdAndUpdate(user._id, {
+            password: hashPassword,
+            isChangePassword: true,
+        })
+            .then(() => {
+                console.log("Done");
+            })
+            .catch((error) => {
+                console.log("update failed", error);
+            });
+
+        await handleSendMail(data)
+            .then(() => {
+                res.status(200).json({
+                    message: "Send mail new password successfully",
+                    data: {
+                        password: randomPassword,
+                    },
+                });
+            })
+            .catch((error) => {
+                res.status(401);
+                throw new Error("Cannot send email");
+            });
+    } else {
+        res.status(401);
+        throw new Error("User not found");
+    }
+});
 module.exports = {
     register,
     login,
     verifyOtp,
+    forgotPassword,
 };
