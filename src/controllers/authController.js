@@ -50,7 +50,7 @@ const register = asyncHandler(async (req, res) => {
     // Tạo user mới
     const newUser = new UserModel({
         email,
-        fullName: fullName ?? "",
+        name: fullName ?? "",
         password: hashPassword,
     });
     // Lưu user xuống database
@@ -156,9 +156,39 @@ const forgotPassword = asyncHandler(async (req, res) => {
         throw new Error("User not found");
     }
 });
+const loginWithGoogle = asyncHandler(async (req, res) => {
+    const userInfo = req.body;
+    console.log("userInfo", userInfo);
+
+    // Kiểm tra user có tồn tại trong DB không
+    const existingUser = await UserModel.findOne({
+        email: userInfo.email,
+    });
+    const user = { ...userInfo };
+    if (existingUser) {
+        await UserModel.findByIdAndUpdate(existingUser.id, {
+            ...userInfo,
+            updatedAt: Date.now(),
+        });
+        user.accessToken = getJsonWebToken(userInfo.email, userInfo.id);
+    } else {
+        const newUser = await UserModel({
+            email: userInfo.email,
+            name: userInfo.name,
+            ...userInfo,
+        });
+        await newUser.save();
+        user.accessToken = getJsonWebToken(newUser.email, newUser.id);
+    }
+    res.status(200).json({
+        message: "Login with google successfully",
+        data: user,
+    });
+});
 module.exports = {
     register,
     login,
     verifyOtp,
     forgotPassword,
+    loginWithGoogle,
 };
