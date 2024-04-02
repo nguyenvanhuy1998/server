@@ -3,6 +3,8 @@ const cors = require("cors");
 const authRouter = require("./src/routers/authRouter");
 const connectDB = require("./src/configs/connectDb");
 const errorMiddleware = require("./src/middlewares/errorMiddleware");
+const userRouter = require("./src/routers/userRouter");
+const verifyMiddleware = require("./src/middlewares/verifyMiddleware");
 const app = express();
 require("dotenv").config();
 
@@ -12,6 +14,8 @@ app.use(express.json());
 const PORT = 3001;
 
 app.use("/auth", authRouter);
+
+app.use("/users", verifyMiddleware, userRouter);
 connectDB();
 
 app.use(errorMiddleware);
