@@ -5,6 +5,7 @@ const connectDB = require("./src/configs/connectDb");
 const errorMiddleware = require("./src/middlewares/errorMiddleware");
 const userRouter = require("./src/routers/userRouter");
 const verifyMiddleware = require("./src/middlewares/verifyMiddleware");
+const eventRouter = require("./src/routers/eventRouter");
 const app = express();
 require("dotenv").config();
 
@@ -16,6 +17,7 @@ const PORT = 3001;
 app.use("/auth", authRouter);
 
 app.use("/users", verifyMiddleware, userRouter);
+app.use("/events", verifyMiddleware, eventRouter);
 connectDB();
 
 app.use(errorMiddleware);

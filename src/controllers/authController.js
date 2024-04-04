@@ -131,9 +131,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
             password: hashPassword,
             isChangePassword: true,
         })
-            .then(() => {
-                console.log("Done");
-            })
+            .then(() => {})
             .catch((error) => {
                 console.log("update failed", error);
             });
@@ -158,7 +156,6 @@ const forgotPassword = asyncHandler(async (req, res) => {
 });
 const loginWithGoogle = asyncHandler(async (req, res) => {
     const userInfo = req.body;
-    console.log("userInfo", userInfo);
 
     // Kiểm tra user có tồn tại trong DB không
     const existingUser = await UserModel.findOne({
