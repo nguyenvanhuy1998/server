@@ -47,24 +47,31 @@ const getEvents = asyncHandler(async (req, res) => {
     const { lat, long, distance } = req.query;
     // Tìm tất cả events
     const events = await EventModel.find({});
-    const items = [];
-    if (events.length > 0) {
-        events.forEach((event) => {
-            const eventDistance = calcDistanceLocation({
-                currentLat: lat,
-                currentLong: long,
-                addressLat: event.location.lat,
-                addressLong: event.location.long,
+    if (lat && long && distance) {
+        const items = [];
+        if (events.length > 0) {
+            events.forEach((event) => {
+                const eventDistance = calcDistanceLocation({
+                    currentLat: lat,
+                    currentLong: long,
+                    addressLat: event.location.lat,
+                    addressLong: event.location.long,
+                });
+                if (eventDistance < distance) {
+                    items.push(event);
+                }
             });
-            if (eventDistance < distance) {
-                items.push(event);
-            }
+        }
+        res.status(200).json({
+            message: "Get events successfully",
+            data: items,
+        });
+    } else {
+        res.status(200).json({
+            message: "Get events successfully",
+            data: events,
         });
     }
-    res.status(200).json({
-        message: "Get events successfully",
-        data: items,
-    });
 });
 
 module.exports = {
