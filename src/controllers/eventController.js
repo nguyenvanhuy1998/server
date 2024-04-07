@@ -44,9 +44,16 @@ const addNewEvent = asyncHandler(async (req, res) => {
     }
 });
 const getEvents = asyncHandler(async (req, res) => {
-    const { lat, long, distance } = req.query;
+    const { lat, long, distance, limit, date } = req.query;
+    console.log(date);
+
     // Tìm tất cả events
-    const events = await EventModel.find({});
+    const events = await EventModel.find({})
+        .sort({
+            createdAt: -1,
+        })
+        .limit(limit ?? 0);
+    console.log(new Date(date).getTime());
     if (lat && long && distance) {
         const items = [];
         if (events.length > 0) {
@@ -64,12 +71,20 @@ const getEvents = asyncHandler(async (req, res) => {
         }
         res.status(200).json({
             message: "Get events successfully",
-            data: items,
+            data: date
+                ? items.filter(
+                      (element) => element.date > new Date(date).getTime()
+                  )
+                : items,
         });
     } else {
         res.status(200).json({
             message: "Get events successfully",
-            data: events,
+            data: date
+                ? events.filter(
+                      (element) => element.date > new Date(date).getTime()
+                  )
+                : events,
         });
     }
 });
