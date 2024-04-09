@@ -45,7 +45,6 @@ const addNewEvent = asyncHandler(async (req, res) => {
 });
 const getEvents = asyncHandler(async (req, res) => {
     const { lat, long, distance, limit, date } = req.query;
-    console.log(date);
 
     // Tìm tất cả events
     const events = await EventModel.find({})
@@ -53,7 +52,6 @@ const getEvents = asyncHandler(async (req, res) => {
             createdAt: -1,
         })
         .limit(limit ?? 0);
-    console.log(new Date(date).getTime());
     if (lat && long && distance) {
         const items = [];
         if (events.length > 0) {
@@ -88,8 +86,34 @@ const getEvents = asyncHandler(async (req, res) => {
         });
     }
 });
+const updateFollowers = asyncHandler(async (req, res) => {
+    const { id, followers } = req.body;
+    await EventModel.findByIdAndUpdate(id, {
+        followers,
+        updatedAt: Date.now(),
+    });
+    res.status(200).json({
+        message: "Update followers successfully",
+        data: [],
+    });
+});
+const getFollowers = asyncHandler(async (req, res) => {
+    const { id } = req.query;
+    const event = await EventModel.findById(id);
+    if (event) {
+        res.status(200).json({
+            message: "Get followers successfully",
+            data: event.followers ?? [],
+        });
+    } else {
+        res.status(401);
+        throw new Error("Event not found");
+    }
+});
 
 module.exports = {
     addNewEvent,
     getEvents,
+    updateFollowers,
+    getFollowers,
 };
